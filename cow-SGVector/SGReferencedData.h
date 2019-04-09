@@ -5,7 +5,6 @@
 #include "common.h"
 #include "RefCount.h"
 
-
 class SGReferencedData
 {
 	public:
@@ -49,12 +48,12 @@ class SGReferencedData
 			printf("ref_count(): refcount %d, data %p\n", c, this);
 			return c;
 		}
-		
+
 		// NEW
 		void detach()
 		{
 			// if the data is shared with another vector
-			if(m_refcount->ref_count() > 1) 
+			if(m_refcount->ref_count() > 1)
 			{
 				printf("detach(): detaching from data and creating new copy %p\n", this);
 				unref(false);

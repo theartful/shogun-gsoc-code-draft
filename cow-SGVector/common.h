@@ -68,6 +68,5 @@ constexpr size_t CPU_CACHE_LINE_SIZE_BYTES = CPU_CACHE_LINE_SIZE/8;
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
 #endif
-
 #include <shogun/lib/memory.h>
 #endif //__COMMON_H__

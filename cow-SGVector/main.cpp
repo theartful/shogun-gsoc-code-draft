@@ -1,7 +1,6 @@
 #include <memory>
 #include "SGVector.h"
 
-
 void cow_singleref_write()
 {
 	int len = 100;
@@ -21,12 +20,12 @@ void cow_multiref_write()
 	printf("x[0] = %d\n", x.get_element(0));
 	printf("y[0] = %d\n", y.get_element(0));
 	printf("data[0] = %d\n", data[0]);
-	
+
 	y.set_const(5);
 	printf("x[0] = %d\n", x.get_element(0));
 	printf("y[0] = %d\n", y.get_element(0));
 	printf("data[0] = %d\n", data[0]);
-	
+
 	x.set_const(3);
 	y.set_const(4);
 	printf("x[0] = %d\n", x.get_element(0));
@@ -55,7 +54,7 @@ void cow_const_effect2()
 	int len = 100;
 	int* data = new int[len];
 	SGVector<int> x(data, len, true);
-	
+
 	int len2 = 100;
 	int* data2 = new int[len2];
 	SGVector<int> y(data, len, true);

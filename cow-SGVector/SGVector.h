@@ -40,7 +40,7 @@ public:
 
 	SGVector<T>& operator=(const SGVector<T>& other)
 	{
-		if(&other == this) 
+		if(&other == this)
 			return *this;
 		unref();
 		copy_data(other);
@@ -87,7 +87,7 @@ public:
 	{
 		if(!vec)
 			return nullptr;
-		
+
 		T* result = new T[m_vlen];
 		memcpy(result, vec, sizeof(T)*m_vlen);
 		return result;
