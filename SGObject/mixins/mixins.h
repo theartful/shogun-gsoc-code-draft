@@ -1,16 +1,12 @@
-# Lightweight static mixin framework
-This is a multi-inheritance based mixin implementation.
-## Concepts
-1. Composition
-2. Mixin
-3. Mutator (name subject to change!)
+#ifndef MIXINS_H
+#define MIXINS_H
 
+#include "types.h"
+#include <utility>
 
-![class diagram](class_diagram.png "Logo Title Text 2")
+template <template <typename> class U, template <typename> class... Ts>
+struct mutator;
 
-### Composition
-A composition is an aggregate of mixins
-```C++
 template <template <typename> class... Ts>
 class composition : public Ts<mutator<Ts, Ts...>>...
 {
@@ -25,14 +21,7 @@ public:
 	{
 	}
 };
-```
-The constructor of a composition calls the constructors of its constituents.
-This is applicable for default constructors, copy constructors, and can be easily extended to move constructors.
-There is currently no way to supply each mixin with its own parameter list.
 
-### Mixin
-A mixin is a piece of functionality.
-```C++
 template <
     typename M, typename Requirements = TemplateTypes<>,
     typename Friends = TemplateTypes<>>
@@ -43,16 +32,21 @@ struct mixin : public M
 
 	virtual ~mixin(){};
 };
-```
-Mixins do not know about any other mixins, unless they're in the requirements/friends list.
-If a mixin is required in the composition, and isn't available, a compile time error is thrown.
 
-### Mutator
-Communication between mixins is done through mutation.
-If a mixin A requires a mixin B, then A can mutate to B, and use its interface.
-Mutators know about the full type of the composition, and hence can provide this service. 
-They also ensure encapsulation; that is, they ensure that the mixins don't know about any non-required/non-friend mixin in the composition.
-```C++
+struct empty_mutator
+{
+	template <template <typename> class I>
+	using friend_t = None;
+	template <template <typename> class I>
+	using requirement_t = None;
+
+	template <template <typename> class I>
+	void* mutate()
+	{
+		return nullptr;
+	}
+};
+
 template <template <typename> class U, template <typename> class... Ts>
 struct mutator
 {
@@ -102,19 +96,11 @@ public:
 		return static_cast<mixin_t<I>*>(most_derived);
 	}
 };
-```
-It might be the case that the public interface isn't enough for communication. This is solved by friendship. Since the mixin can't know about the full type of its friends, it uses the mutator to also provide this information.
-```C++
-template <typename M>
-class A : public mixin<M, requires<>, friends_with<B>> {
-    friend typename M::template friend_t<B>;
-    // more code
-};
-```
-Note that friends don't have to be in the composition.
 
-### Examples
-An example is provided in the repo.
+template <template <typename> class... Ts>
+using requires = TemplateTypes<Ts...>;
 
-### Acknowledgement
-This was inspired by [this talk](https://www.youtube.com/watch?v=wWZi_wPyVvs).
+template <template <typename> class... Ts>
+using friends_with = TemplateTypes<Ts...>;
+
+#endif
