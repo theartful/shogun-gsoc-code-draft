@@ -12,13 +12,21 @@ struct Types
 {
 	using Head = None;
 	using Tail = None;
-
 	static constexpr int size = 0;
 
 	template <typename U>
 	struct has : std::false_type
 	{
 	};
+	template <typename U>
+	static constexpr bool has_v = has<U>::value;
+
+	template <typename TypesT>
+	struct has_types : std::false_type
+	{
+	};
+	template <typename TypesT>
+	static constexpr bool has_types_v = has<TypesT>::value;
 };
 
 template <typename T1, typename... Args>
@@ -36,17 +44,21 @@ struct Types<T1, Args...> : Types<Args...>
 	                               typename Tail::template has<U>>::value>
 	{
 	};
+	template <typename U>
+	static constexpr bool has_v = has<U>::value;
 
 	template <typename TypesT>
 	struct has_types
 	    : std::integral_constant<
 	          bool,
-	          has<typename TypesT::Head>::value &&
+	          has_v<typename TypesT::Head> &&
 	              std::conditional_t<
 	                  std::is_same<typename TypesT::Tail, None>::value,
 	                  std::true_type, has_types<typename TypesT::Tail>>::value>
 	{
 	};
+	template <typename TypesT>
+	static constexpr bool has_types_v = has_types<TypesT>::value;
 };
 
 template <template <typename> class... Args>
@@ -55,8 +67,8 @@ struct TemplateTypes
 	template <typename U>
 	using Head = None;
 	using Tail = None;
-
 	static constexpr int size = 0;
+
 	template <typename U>
 	using ToTypes = Types<>;
 };
@@ -67,10 +79,10 @@ struct TemplateTypes<T1, Args...> : TemplateTypes<Args...>
 	template <typename U>
 	using Head = T1<U>;
 	using Tail = TemplateTypes<Args...>;
+	static constexpr int size = sizeof...(Args) + 1;
+
 	template <typename U>
 	using ToTypes = Types<T1<U>, Args<U>...>;
-
-	static constexpr int size = sizeof...(Args) + 1;
 };
 
 #endif

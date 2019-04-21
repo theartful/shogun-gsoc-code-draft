@@ -16,20 +16,24 @@ public:
 	}
 
 	composition(const composition<Ts...>& orig)
-	    : Ts<mutator<Ts, Ts...>>(
-	          static_cast<const Ts<mutator<Ts, Ts...>>&>(orig))...
+	    : Ts<mutator<Ts, Ts...>>(orig)...
+	{
+	}
+
+	composition(composition<Ts...>&& orig)
+	    : Ts<mutator<Ts, Ts...>>(std::move(orig))...
+	{
+	}
+
+	virtual ~composition()
 	{
 	}
 };
 
-template <
-    typename M, typename Requirements = TemplateTypes<>,
+template <typename M, typename Requirements = TemplateTypes<>,
     typename Friends = TemplateTypes<>>
 struct mixin : public M
 {
-	using requirements = Requirements;
-	using friends = Friends;
-
 	virtual ~mixin(){};
 };
 
@@ -41,7 +45,7 @@ struct empty_mutator
 	using requirement_t = None;
 
 	template <template <typename> class I>
-	void* mutate()
+	None* mutate()
 	{
 		return nullptr;
 	}
@@ -53,24 +57,25 @@ struct mutator
 private:
 	using mixin_list_t = Types<Ts<empty_mutator>...>;
 	using composition_t = composition<Ts...>;
-	using client_friends_t =
+	using friends_t =
 	    typename U<empty_mutator>::friends::template ToTypes<empty_mutator>;
-	using client_req_t = typename U<
+	using requirements_t = typename U<
 	    empty_mutator>::requirements::template ToTypes<empty_mutator>;
 
 	// throw compilation error if not all requirements are met
-	constexpr static bool is_valid =
-	    mixin_list_t::template has_types<client_req_t>::value;
+	static constexpr bool is_valid =
+	    mixin_list_t::template has_types<requirements_t>::value;
 	using check = std::enable_if_t<is_valid>;
 
 	template <template <typename> class I>
-	using has_type_t = typename mixin_list_t::template has<I<empty_mutator>>;
+	static constexpr bool has_type =
+	    mixin_list_t::template has_v<I<empty_mutator>>;
 	template <template <typename> class I>
-	using is_friend_t =
-	    typename client_friends_t::template has<I<empty_mutator>>;
+	static constexpr bool is_friend =
+	    friends_t::template has_v<I<empty_mutator>>;
 	template <template <typename> class I>
-	using does_require_t =
-	    typename client_req_t::template has<I<empty_mutator>>;
+	static constexpr bool does_require =
+	    requirements_t::template has_v<I<empty_mutator>>;
 
 	// generate mutator type for mixin
 	template <template <typename> class I>
@@ -82,19 +87,28 @@ private:
 public:
 	template <template <typename> class I>
 	using friend_t = std::enable_if_t<
-	    is_friend_t<I>::value,
-	    std::conditional_t<has_type_t<I>::value, mixin_t<I>, None>>;
+	    is_friend<I>, std::conditional_t<has_type<I>, mixin_t<I>, None>>;
 
 	template <template <typename> class I>
-	using requirement_t =
-	    std::enable_if_t<does_require_t<I>::value, mixin_t<I>>;
+	using requirement_t = std::enable_if_t<does_require<I>, mixin_t<I>>;
 
 	template <template <typename> class I>
-	requirement_t<I>* mutate()
+	requirement_t<I>& mutate()
 	{
 		auto most_derived = static_cast<composition_t*>(this);
-		return static_cast<mixin_t<I>*>(most_derived);
+		return static_cast<mixin_t<I>&>(*most_derived);
 	}
+
+	virtual ~mutator()
+	{
+	}
+};
+
+template <typename Requirements, typename Friends>
+struct mixin<empty_mutator, Requirements, Friends>
+{
+	using requirements = Requirements;
+	using friends = Friends;
 };
 
 template <template <typename> class... Ts>
